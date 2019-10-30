@@ -28,6 +28,7 @@ function main() {
     git clone --local "$local_git_root" "$target_dir"
     echo 1>&2 "${YELLOW}[LOG] copy git diff HEAD${DEFAULT}"
     git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
+    echo 1>&2 "${YELLOW}[LOG] finished${DEFAULT}"
     return
   fi
   if [[ $subcommand == 'remove' ]]; then
@@ -82,6 +83,7 @@ function main() {
         return 1
       fi
       subcommand_sync
+      echo 1>&2 "${YELLOW}[LOG] finished${DEFAULT}"
     done
     return
   fi
