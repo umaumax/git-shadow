@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+set -eu
+
+BLACK=$'\e[30m' RED=$'\e[31m' GREEN=$'\e[32m' YELLOW=$'\e[33m' BLUE=$'\e[34m' PURPLE=$'\e[35m' LIGHT_BLUE=$'\e[36m' WHITE=$'\e[37m' GRAY=$'\e[90m' DEFAULT=$'\e[0m'
+
+function help() {
+  echo "$(basename "$0") "'<add|sync|list|remove> [dirpath]'
+}
+function main() {
+  ! git rev-parse --is-inside-work-tree >/dev/null 2>&1 && echo 1>&2 'fatal: not a git repository (or any of the parent directories): .git' && return 1
+
+  { [[ $# == 0 ]] || [[ $1 =~ ^(-h|-{1,2}help)$ ]]; } && help && return 1
+  local subcommand=$1
+
+  shift
+  local local_git_root="$(git rev-parse --show-toplevel)"
+  local local_git_branch="$(git rev-parse --abbrev-ref HEAD)"
+  local setting_dirpath="$(git rev-parse --show-toplevel)/.git/shadow"
+  local info_filepath="$setting_dirpath/info"
+  mkdir -p "$setting_dirpath"
+  if [[ $subcommand == 'add' ]]; then
+    { [[ $# == 0 ]] || [[ $1 =~ ^(-h|-{1,2}help)$ ]]; } && help && return 1
+    local target_dir=$1
+    mkdir -p "$target_dir"
+    echo "$target_dir" >>"$info_filepath"
+    echo 1>&2 "${YELLOW}[LOG] copy...${DEFAULT}"
+    git clone --local "$local_git_root" "$target_dir"
+    echo 1>&2 "${YELLOW}[LOG] copy git diff HEAD${DEFAULT}"
+    git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
+    return
+  fi
+  if [[ $subcommand == 'remove' ]]; then
+    echo 1>&2 "${RED}'remove' command is WIP${DEFAULT}"
+    echo 1>&2 "${GREEN} Please delete any dirpath from ${info_filepath} and 'rm -rf' that dirpath!${DEFAULT}"
+    return
+  fi
+  if [[ $subcommand == 'list' ]]; then
+    if [[ -f "$info_filepath" ]]; then
+      cat "$info_filepath"
+    else
+      echo 1>&2 "${BLUE}empty setting${DEFAULT}"
+    fi
+    return
+  fi
+  if [[ $subcommand == 'sync' ]]; then
+    function subcommand_sync() {
+      echo 1>&2 "${YELLOW}[LOG] stash${DEFAULT}"
+      git --git-dir "$target_dir/.git" -C "$target_dir" stash
+      echo 1>&2 "${YELLOW}[LOG] checkout $local_git_branch ${DEFAULT}"
+      git --git-dir "$target_dir/.git" -C "$target_dir" checkout "$local_git_branch"
+
+      # WARN: masterのほうがslaveよりも進んでいることを仮定しているため，rebaseときにcommit shaが変化した場合に，その分のcommitを削除する処理を行う必要がある
+      local patch_list=$(uniq -u <({
+        git log --pretty=%H
+        echo
+        git --git-dir "$target_dir/.git" -C "$target_dir" log --pretty=%H
+      } | sort | awk 'NF'))
+
+      local tmpfile=$(mktemp)
+      echo 1>&2 "${YELLOW}[LOG] format-patch and am${DEFAULT}"
+      # -r: Backslash  does not act as an escape character.  The backslash is considered to be part of the line. In particular, a backslash-newline pair can not be used as a line continuation.
+      printf '%s' "$patch_list" | while IFS= read -r line || [[ -n "$line" ]]; do
+        local commit_id="$line"
+        git log -n 1 "$commit_id" --oneline
+        # WARN: you can't use am and process substitution
+        git format-patch "${commit_id}~..${commit_id}" --stdout >"$tmpfile"
+        # NOTE: --committer-date-is-author-date for same sha
+        # FYI: [sha1 \- Should git\-apply or git\-am come up with the same hash? \- Stack Overflow]( https://stackoverflow.com/questions/8550400/should-git-apply-or-git-am-come-up-with-the-same-hash )
+        git --git-dir "$target_dir/.git" -C "$target_dir" am --committer-date-is-author-date "$tmpfile"
+      done
+      rm "$tmpfile"
+
+      echo 1>&2 "${YELLOW}[LOG] apply git diff HEAD${DEFAULT}"
+      git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
+    }
+    cat "$info_filepath" | while IFS= read -r line || [[ -n "$line" ]]; do
+      local target_dir=$line
+      echo 1>&2 "${PURPLE}[LOG] sync $target_dir start!${DEFAULT}"
+      if [[ ! -d $target_dir/.git ]]; then
+        echo 1>&2 "${RED}$target_dir is not git repo${DEFAULT}"
+        return 1
+      fi
+      subcommand_sync
+    done
+    return
+  fi
+
+  echo 1>&2 'unknown subcommand: '"[$subcommand]"
+  help
+  return 1
+}
+
+main "$@"
