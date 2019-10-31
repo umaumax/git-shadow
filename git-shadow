@@ -27,7 +27,9 @@ function main() {
     echo 1>&2 "${YELLOW}[LOG] copy...${DEFAULT}"
     git clone --local "$local_git_root" "$target_dir"
     echo 1>&2 "${YELLOW}[LOG] copy git diff HEAD${DEFAULT}"
-    git diff --name-status HEAD | grep . && git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
+    if git diff --name-status HEAD | grep .; then
+      git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
+    fi
     echo 1>&2 "${YELLOW}[LOG] finished${DEFAULT}"
     return
   fi
@@ -73,7 +75,9 @@ function main() {
       rm "$tmpfile"
 
       echo 1>&2 "${YELLOW}[LOG] apply git diff HEAD${DEFAULT}"
-      git diff --name-status HEAD | grep . && git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
+      if git diff --name-status HEAD | grep .; then
+        git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
+      fi
     }
     cat "$info_filepath" | while IFS= read -r line || [[ -n "$line" ]]; do
       local target_dir=$line
