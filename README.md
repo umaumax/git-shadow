@@ -15,7 +15,7 @@
 ```
 git shadow add ~/tmp/$(basename $(git rev-parse --show-toplevel))-shadow
 # add commit or change files
-git sync
+git shadow sync
 ```
 
 ## how to install
