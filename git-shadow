@@ -54,11 +54,12 @@ function main() {
       git --git-dir "$target_dir/.git" -C "$target_dir" checkout "$local_git_branch"
 
       # WARN: masterのほうがslaveよりも進んでいることを仮定しているため，rebaseときにcommit shaが変化した場合に，その分のcommitを削除する処理を行う必要がある
-      local patch_list=$(uniq -u <({
+      # NOTE: uniq -u without sort
+      local patch_list=$({
         git log --pretty=%H
         echo
         git --git-dir "$target_dir/.git" -C "$target_dir" log --pretty=%H
-      } | sort | awk 'NF'))
+      } | perl -ne '$count{$_}++; $line_no{$_}=$.; END{foreach(sort{$line_no{$a}<=>${line_no{$b}}} keys %line_no){if ($count{$_}==1){print "$_";}}}' | awk 'NF' | tail -r)
 
       local tmpfile=$(mktemp)
       echo 1>&2 "${YELLOW}[LOG] format-patch and am${DEFAULT}"
