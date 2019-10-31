@@ -79,7 +79,7 @@ function main() {
         git --git-dir "$target_dir/.git" -C "$target_dir" apply <(git diff HEAD)
       fi
     }
-    cat "$info_filepath" | while IFS= read -r line || [[ -n "$line" ]]; do
+    cat "$info_filepath" | awk '!a[$0]++' | while IFS= read -r line || [[ -n "$line" ]]; do
       local target_dir=$line
       echo 1>&2 "${PURPLE}[LOG] sync $target_dir start!${DEFAULT}"
       if [[ ! -d $target_dir/.git ]]; then
