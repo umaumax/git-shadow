@@ -42,7 +42,7 @@ function main() {
     if [[ -f "$info_filepath" ]]; then
       cat "$info_filepath"
     else
-      echo 1>&2 "${BLUE}empty setting${DEFAULT}"
+      echo 1>&2 "${GREEN}empty setting${DEFAULT}"
     fi
     return
   fi
