@@ -1,0 +1,12 @@
+#compdef git-shadow
+
+_git_shadow() {
+  emulate -L zsh
+
+  _values \
+    'subcommand' \
+    'add' \
+    'sync' \
+    'list' \
+    'remove'
+}
