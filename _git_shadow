@@ -5,8 +5,11 @@ _git_shadow() {
 
   _values \
     'subcommand' \
-    'add' \
-    'sync' \
-    'list' \
-    'remove'
+    'add[add local clone(shadow) repo: REPO_DIR]' \
+    'sync[sync current branch]' \
+    'list[list shadow repo dirs]' \
+    'remove[WIP]'
+
+  # NOTE: at _git_xxx _files are added automatically
+  # _files
 }
