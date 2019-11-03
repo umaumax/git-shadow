@@ -21,11 +21,11 @@ git shadow sync
 ## how to install
 ```
 install_path="$HOME/local/bin/"
-wgit https://raw.githubusercontent.com/umaumax/git-shadow/master/git-shadow -O "$install_path/git-shadow"
+wget https://raw.githubusercontent.com/umaumax/git-shadow/master/git-shadow -O "$install_path/git-shadow"
 chmod u+x "$install_path/git-shadow"
 ```
 
 for zsh completion
 ```
-wgit https://raw.githubusercontent.com/umaumax/git-shadow/master/_git_shadow -O /usr/local/share/zsh/site-functions
+wget https://raw.githubusercontent.com/umaumax/git-shadow/master/_git_shadow -O /usr/local/share/zsh/site-functions
 ```
