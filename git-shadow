@@ -59,7 +59,7 @@ function main() {
         git log --pretty=%H
         echo
         git --git-dir "$target_dir/.git" -C "$target_dir" log --pretty=%H
-      } | perl -ne '$count{$_}++; $line_no{$_}=$.; END{foreach(sort{$line_no{$a}<=>${line_no{$b}}} keys %line_no){if ($count{$_}==1){print "$_";}}}' | awk 'NF' | tail -r)
+      } | perl -ne '$count{$_}++; $line_no{$_}=$.; END{foreach(sort{$line_no{$a}<=>${line_no{$b}}} keys %line_no){if ($count{$_}==1){print "$_";}}}' | awk 'NF' | perl -e 'print reverse<>')
 
       local tmpfile=$(mktemp)
       echo 1>&2 "${YELLOW}[LOG] format-patch and am${DEFAULT}"
